@@ -3,14 +3,11 @@ package au.mlc.copy.files;
 import java.io.*;
 import java.nio.file.*;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
-
 public class CopyFilesRunner {
 
-    public void copyAsBuiltSupportingDocumentation() {
+    public int copyAsBuiltSupportingDocumentation(int filesCounter) {
 
-        int countFiles;
+        int countFilesInFolder;
         String filesPath, destinationPath, plantRoomSuffix;
         File sourceFilePath;
         File[] destinationFolderContent;
@@ -71,6 +68,7 @@ public class CopyFilesRunner {
                         try {
 
                             Files.copy(file.toPath(), new File(destinationPath + file.getName()).toPath());
+                            filesCounter++;
 
                         } catch (IOException e) {
                             System.out.println(e);
@@ -78,7 +76,7 @@ public class CopyFilesRunner {
                     }
 
                     // cleanup the file names
-                    countFiles = 1;
+                    countFilesInFolder = 1;
                     for (File file : new File(destinationPath).listFiles()) {
                         plantRoomSuffix = "";
                         try {
@@ -92,22 +90,22 @@ public class CopyFilesRunner {
                                 plantRoomSuffix = " Part 3";
                             }
                             if (file.getName().contains("NDI")) {
-                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - NDI's for completed works.pdf", countFiles, drop, level, plantRoomSuffix)));
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - NDI's for completed works.pdf", countFilesInFolder, drop, level, plantRoomSuffix)));
                             } else if (file.getName().contains("ITP")) {
-                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Inspection and Test Plan.pdf", countFiles, drop, level, plantRoomSuffix)));
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Inspection and Test Plan.pdf", countFilesInFolder, drop, level, plantRoomSuffix)));
                             } else if (file.getName().contains("Q-REC") && file.getName().contains("emeas")) {
-                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Q-REC-008 as-built records and remeasure.pdf", countFiles, drop, level, plantRoomSuffix)));
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Q-REC-008 as-built records and remeasure.pdf", countFilesInFolder, drop, level, plantRoomSuffix)));
                             } else if (file.getName().contains("Q-REC") && !file.getName().contains("emeas")) {
-                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Q-REC-008 as-built records.pdf", countFiles, drop, level, plantRoomSuffix)));
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Q-REC-008 as-built records.pdf", countFilesInFolder, drop, level, plantRoomSuffix)));
                             } else if (file.getName().contains("emeas") && !file.getName().contains("Q-REC")) {
-                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Remeasure.pdf", countFiles, drop, level, plantRoomSuffix)));
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Remeasure.pdf", countFilesInFolder, drop, level, plantRoomSuffix)));
                             } else if (file.getName().contains("nag")) {
-                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Snag list.pdf", countFiles, drop, level, plantRoomSuffix)));
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Snag list.pdf", countFilesInFolder, drop, level, plantRoomSuffix)));
                             }
                         } catch (IOException e) {
                             System.out.println(e + String.format(" troubles renaming NDI file at D%sL%s", drop, level, plantRoomSuffix));
                         }
-                        countFiles++;
+                        countFilesInFolder++;
                     }
 
 
@@ -116,9 +114,10 @@ public class CopyFilesRunner {
                 }
             }
         }
+        return filesCounter;
     }
 
-    public void copyAsBuiltReports() {
+    public int copyAsBuiltReports(int filesCounter) {
 
         String filePath;
         String destinationString;
@@ -172,6 +171,7 @@ public class CopyFilesRunner {
 
                     try {
                         Files.copy(asBuiltReport.toPath(), new File(destinationString + asBuiltReport.getName()).toPath());
+                        filesCounter++;
                     } catch (IOException e) {
                         System.out.println(e);
                     }
@@ -180,14 +180,19 @@ public class CopyFilesRunner {
                 }
             }
         }
+        return filesCounter;
     }
 
 
     public static void main(String[] args) {
         CopyFilesRunner copyFilesRunner = new CopyFilesRunner();
+        int filesCounter = 0;
         System.out.println("Starting to copy As-built ScanPrint Reports...");
-        copyFilesRunner.copyAsBuiltReports();
+        long startMillis = System.currentTimeMillis();
+        filesCounter = copyFilesRunner.copyAsBuiltReports(filesCounter);
         System.out.println("Starting to copy As-built supporting documentation...");
-        copyFilesRunner.copyAsBuiltSupportingDocumentation();
+        filesCounter = copyFilesRunner.copyAsBuiltSupportingDocumentation(filesCounter);
+        long endMillis = System.currentTimeMillis();
+        System.out.println(String.format("Complete, files copied: %d, elapsed time: %d s", filesCounter, (endMillis-startMillis)/1000 ));
     }
 }
