@@ -8,11 +8,124 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class CopyFilesRunner {
 
+    public void copyAsBuiltSupportingDocumentation() {
+
+        int countFiles;
+        String filesPath, destinationPath, plantRoomSuffix;
+        File sourceFilePath;
+        File[] destinationFolderContent;
+        File[] listOfFiles,ndiForCompletedWorksFiles;
+        Path path;
+
+        for (int drop = 2; drop <= 8; drop = drop + 2) {
+
+            for (int level = 8; level <= 66; level++) {
+
+                if (level < 10) {
+                    destinationPath = String.format("T:/QUALITY/FACADE DATABASE ( FINAL )/4b Works (As-built reports)/DROP %d/D%dL0%d/Inspection and Test Plan/", drop, drop, level);
+                    filesPath = String.format("T:/QUALITY/SCANPRINT REPORTS/DROP %d/D%dL0%d/Scanned documents", drop, drop, level);
+                } else {
+                    destinationPath = String.format("T:/QUALITY/FACADE DATABASE ( FINAL )/4b Works (As-built reports)/DROP %d/D%dL%d/Inspection and Test Plan/", drop, drop, level);
+                    filesPath = String.format("T:/QUALITY/SCANPRINT REPORTS/DROP %d/D%dL%d/Scanned documents", drop, drop, level);
+                }
+
+                destinationFolderContent = new File(destinationPath).listFiles();
+                try {
+                    for (File file : destinationFolderContent) {
+                        file.delete();
+                    }
+                } catch (NullPointerException e) {
+                    System.out.println(String.format("D%dL%d foldr 'Inspection and Test Plan' found empty or not existing", drop, level));
+                }
+
+                try {
+                    sourceFilePath = new File(filesPath);
+
+                    listOfFiles = sourceFilePath.listFiles();
+
+                    // check if contains NDI folder, if yes, extract file from it and add to list of files
+                    for (File file : listOfFiles) {
+                        if (file.toString().contains("NDI")) {
+                            ndiForCompletedWorksFiles = new File(file.getPath()).listFiles();
+                            for (File ndiFile : ndiForCompletedWorksFiles) {
+                                if (ndiFile.getName().endsWith(".pdf")) {
+                                    try {
+                                        path = Paths.get(ndiFile.getPath());
+                                        Files.move(path, path.resolveSibling(String.format("D%dL%d - NDI's for completed works.pdf", drop, level)));
+                                        listOfFiles[listOfFiles.length - 1] = ndiFile;
+                                    } catch (IOException e) {
+                                        System.out.println(e + String.format(" troubles renaming NDI file at D%sL%s", drop, level));
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+
+                    try {
+                        Files.createDirectories(Paths.get(destinationPath));
+                    } catch (IOException en) {
+                        System.out.println(en);
+                    }
+                    for (File file : listOfFiles) {
+                        try {
+
+                            Files.copy(file.toPath(), new File(destinationPath + file.getName()).toPath());
+
+                        } catch (IOException e) {
+                            System.out.println(e);
+                        }
+                    }
+
+                    // cleanup the file names
+                    countFiles = 1;
+                    for (File file : new File(destinationPath).listFiles()) {
+                        plantRoomSuffix = "";
+                        try {
+                            if (file.getName().contains("P ") || file.getName().contains("P_")) {
+                                plantRoomSuffix = "P";
+                            } else if (file.getName().contains("art 1")) {
+                                plantRoomSuffix = " Part 1";
+                            } else if (file.getName().contains("art 2")) {
+                                plantRoomSuffix = " Part 2";
+                            } else if (file.getName().contains("art 3")) {
+                                plantRoomSuffix = " Part 3";
+                            }
+                            if (file.getName().contains("NDI")) {
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - NDI's for completed works.pdf", countFiles, drop, level, plantRoomSuffix)));
+                            } else if (file.getName().contains("ITP")) {
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Inspection and Test Plan.pdf", countFiles, drop, level, plantRoomSuffix)));
+                            } else if (file.getName().contains("Q-REC") && file.getName().contains("emeas")) {
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Q-REC-008 as-built records and remeasure.pdf", countFiles, drop, level, plantRoomSuffix)));
+                            } else if (file.getName().contains("Q-REC") && !file.getName().contains("emeas")) {
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Q-REC-008 as-built records.pdf", countFiles, drop, level, plantRoomSuffix)));
+                            } else if (file.getName().contains("emeas") && !file.getName().contains("Q-REC")) {
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Remeasure.pdf", countFiles, drop, level, plantRoomSuffix)));
+                            } else if (file.getName().contains("nag")) {
+                                Files.move(file.toPath(), file.toPath().resolveSibling(String.format("%d - D%dL%d%s - Snag list.pdf", countFiles, drop, level, plantRoomSuffix)));
+                            }
+                        } catch (IOException e) {
+                            System.out.println(e + String.format(" troubles renaming NDI file at D%sL%s", drop, level, plantRoomSuffix));
+                        }
+                        countFiles++;
+                    }
+
+
+                } catch (NullPointerException e) {
+                    System.out.println(filesPath + " not found");
+                }
+            }
+        }
+    }
+
     public void copyAsBuiltReports() {
 
-        File asBuiltReport;
         String filePath;
         String destinationString;
+        File sourceFilePath;
+        File asBuiltReport;
+        File[] listOfFiles;
+        File[] destinationFolderContent;
 
         for (int drop = 2; drop <= 8; drop = drop + 2) {
 
@@ -26,12 +139,21 @@ public class CopyFilesRunner {
                     filePath = String.format("T:/QUALITY/SCANPRINT REPORTS/DROP %d/D%dL%d/As-built Report", drop, drop, level);
                 }
 
+                destinationFolderContent = new File(destinationString).listFiles();
+                try {
+                    for (File file : destinationFolderContent) {
+                        file.delete();
+                    }
+                } catch (NullPointerException e) {
+                    System.out.println(String.format("D%dL%d folder ScanPrint report found empty or not existing", drop, level));
+                }
+
                 //System.out.println(destinationString + "    " + filePath);
 
                 try {
-                    File sourceFilePath = new File(filePath);
+                    sourceFilePath = new File(filePath);
 
-                    File[] listOfFiles = sourceFilePath.listFiles();
+                    listOfFiles = sourceFilePath.listFiles();
 
                     //System.out.println(listOfFiles[listOfFiles.length-1].getName());
 
@@ -63,6 +185,9 @@ public class CopyFilesRunner {
 
     public static void main(String[] args) {
         CopyFilesRunner copyFilesRunner = new CopyFilesRunner();
+        System.out.println("Starting to copy As-built ScanPrint Reports...");
         copyFilesRunner.copyAsBuiltReports();
+        System.out.println("Starting to copy As-built supporting documentation...");
+        copyFilesRunner.copyAsBuiltSupportingDocumentation();
     }
 }
