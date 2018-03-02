@@ -6,6 +6,66 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CopyFilesRunner {
+    public int copyNdiReports(int filesCounter) {
+        String filePath;
+        String destinationString;
+        File sourceFilePath;
+        File ndiReport = null;
+        File[] listOfFiles;
+        File[] destinationFolderContent;
+        for (int drop = 2; drop <= 8; drop = drop + 2) {
+            for (int level = 8; level <= 66; level++) {
+                if (level < 10) {
+                    destinationString = String.format("T:/QUALITY/FACADE DATABASE ( FINAL )/4a Schedule of all repairs (NDI reports)/DROP %d/D%dL0%d/ScanPrint report/", drop, drop, level);
+                    filePath = String.format("T:/QUALITY/SCANPRINT REPORTS/DROP %d/D%dL0%d/NDI's Report", drop, drop, level);
+                } else {
+                    destinationString = String.format("T:/QUALITY/FACADE DATABASE ( FINAL )/4a Schedule of all repairs (NDI reports)/DROP %d/D%dL%d/ScanPrint report/", drop, drop, level);
+                    filePath = String.format("T:/QUALITY/SCANPRINT REPORTS/DROP %d/D%dL%d/NDI's Report", drop, drop, level);
+                }
+                destinationFolderContent = new File(destinationString).listFiles();
+                try {
+                    for (File file : destinationFolderContent) {
+                        file.delete();
+                    }
+                } catch (NullPointerException e) {
+                    System.out.println(String.format("D%dL%d folder ScanPrint report found empty or not existing", drop, level));
+                }
+                try {
+                    Files.createDirectories(Paths.get(destinationString));
+                } catch (IOException en) {
+                    System.out.println(en);
+                }
+                try {
+                    sourceFilePath = new File(filePath);
+                    listOfFiles = sourceFilePath.listFiles();
+                    String lastFolder = listOfFiles[listOfFiles.length - 1].getName();
+                    filePath = String.format("%s/%s", filePath, lastFolder);
+                    sourceFilePath = new File(filePath);
+                    for (File file : sourceFilePath.listFiles()) {
+                        if (file.getName().contains("MLC-SPR") || file.getName().endsWith(".pdf")) {
+                            ndiReport = file;// the NDI's report pdf file
+                        } else {
+                            System.out.println(String.format("could not find D%dL%d NDI's report", drop, level));
+                        }
+                    }
+                    try {
+                        Files.createDirectories(Paths.get(destinationString));
+                    } catch (IOException en) {
+                        System.out.println(en + String.format("could not create D%dL%d ScanPrint Report folder", drop, level));
+                    }
+                    try {
+                        Files.copy(ndiReport.toPath(), new File(destinationString + ndiReport.getName()).toPath());
+                        filesCounter++;
+                    } catch (IOException e) {
+                        System.out.println(e + String.format("could not copy D%dL%d NDI's report", drop, level));
+                    }
+                } catch (NullPointerException e) {
+                    System.out.println(filePath + " NDI's report not found");
+                }
+            }
+        }
+        return filesCounter;
+    }
 
     private int copyNdiSupportingDocumentation(int filesCounter) {
         String filesPath, destinationPath, destinationCovermeter, destinationPotential, destionationVisual, destinationDrummy;
@@ -13,11 +73,8 @@ public class CopyFilesRunner {
         File[] destinationFolderContent;
         File[] listOfFiles;
         List<File> filesPotential;
-
         for (int drop = 2; drop <= 8; drop = drop + 2) {
-
             for (int level = 8; level <= 66; level++) {
-
                 if (level < 10) {
                     destinationPath = String.format("T:/QUALITY/FACADE DATABASE ( FINAL )/4a Schedule of all repairs (NDI reports)/DROP %d/D%dL0%d/Inspection and Test Plan/", drop, drop, level);
                     filesPath = String.format("T:/DOCUMENTS/From 2000 to 4999 = WORKS/From 3000 to 3050 = Repair Works/3000 = ITP, Tower NDI/Results/Drop %d/D%d L%d/", drop, drop, level);
@@ -29,7 +86,6 @@ public class CopyFilesRunner {
                 destinationPotential = destinationPath + "Q-CL-009 Potential mapping results/";
                 destinationDrummy = destinationPath + "Q-REC-012 Drummy and low cover survey/";
                 destionationVisual = destinationPath + "Q-REC-012 Visual Inspection/";
-
                 destinationFolderContent = new File(destinationPath).listFiles();
                 try {
                     for (File file : destinationFolderContent) {
@@ -43,7 +99,6 @@ public class CopyFilesRunner {
                 } catch (NullPointerException e) {
                     System.out.println(String.format("D%dL%d folder 'Inspection and Test Plan' found empty or not existing", drop, level));
                 }
-
                 try {
                     Files.createDirectories(Paths.get(destinationCovermeter));
                     Files.createDirectories(Paths.get(destinationPotential));
@@ -52,19 +107,15 @@ public class CopyFilesRunner {
                 } catch (IOException en) {
                     System.out.println(en);
                 }
-
                 sourceFilePath = new File(filesPath);
-
                 try {
                     listOfFiles = sourceFilePath.listFiles();
-
                     if (listOfFiles.length == 0) {
                         System.out.println("empty source folder");
                     }
                     filesPotential = new ArrayList<>();
                     fileDrummy = null;
                     for (File file : listOfFiles) {
-
                         if (file.getName().contains("ITP")) {
                             fileITP = file;
                             if (fileITP.isDirectory()) {
@@ -110,7 +161,7 @@ public class CopyFilesRunner {
                             fileDrummy = file;
                             if (fileDrummy.isDirectory()) {
                                 for (File fileInFolder : fileDrummy.listFiles()) {
-                                    if (fileInFolder.getName().endsWith(".pdf")) {
+                                    if (fileInFolder.getName().endsWith(".pdf") && !(fileInFolder.getName().contains(String.format("D%d L%d", drop, level)))) {
                                         fileDrummy = fileInFolder;
                                     }
                                 }
@@ -124,11 +175,11 @@ public class CopyFilesRunner {
                                 System.out.println(e + String.format("D%dL%d Drummy file problem", drop, level));
                             }
                         }
-                        if (file.getName().contains("visual")) {
+                        if (file.getName().contains("visual") || file.getName().contains("mark")) {
                             fileVisual = file;
                             if (fileVisual.isDirectory()) {
                                 for (File fileInFolder : fileVisual.listFiles()) {
-                                    if (fileInFolder.getName().endsWith(".pdf")) {
+                                    if (fileInFolder.getName().endsWith(".pdf") && !(fileInFolder.getName().contains(String.format("D%d L%d", drop, level)))) {
                                         fileVisual = fileInFolder;
                                     }
                                 }
@@ -164,7 +215,11 @@ public class CopyFilesRunner {
                                     System.out.println(String.format("D%dL%d is missing potential mapping results <<<-----", drop, level));
                                 }
                             } else {
-                                filesPotential.add(file);
+                                if (file.getName().endsWith(".pdf")) {
+                                    filesPotential.add(file);
+                                } else {
+                                    System.out.println(String.format("D%dL%d potential mapping files missing", drop, level));
+                                }
                             }
                         }
                     }
@@ -182,9 +237,8 @@ public class CopyFilesRunner {
                             System.out.println(e + String.format("D%dL%d Potential file problem", drop, level));
                         }
                     }
-                    System.out.println(fileDrummy);
                     if (fileDrummy == null) {
-                        newFile = new File(String.format("%sPlease refer to D%dL%d Q-REC-012 Visual Inspection", destinationDrummy, drop, level));
+                        newFile = new File(String.format("%sRecorded on D%dL%d Q-REC-012 Visual Inspection", destinationDrummy, drop, level));
                         try {
                             newFile.createNewFile();
                         } catch (IOException e) {
@@ -200,16 +254,13 @@ public class CopyFilesRunner {
     }
 
     public int copyAsBuiltSupportingDocumentation(int filesCounter) {
-
         int countFilesInFolder;
         String filesPath, destinationPath, plantRoomSuffix;
         File sourceFilePath;
         File[] destinationFolderContent;
         File[] listOfFiles,ndiForCompletedWorksFiles;
         Path path;
-
         for (int drop = 2; drop <= 8; drop = drop + 2) {
-
             for (int level = 8; level <= 66; level++) {
 
                 if (level < 10) {
@@ -219,7 +270,6 @@ public class CopyFilesRunner {
                     destinationPath = String.format("T:/QUALITY/FACADE DATABASE ( FINAL )/4b Works (As-built reports)/DROP %d/D%dL%d/Inspection and Test Plan/", drop, drop, level);
                     filesPath = String.format("T:/QUALITY/SCANPRINT REPORTS/DROP %d/D%dL%d/Scanned documents", drop, drop, level);
                 }
-
                 destinationFolderContent = new File(destinationPath).listFiles();
                 try {
                     for (File file : destinationFolderContent) {
@@ -228,10 +278,8 @@ public class CopyFilesRunner {
                 } catch (NullPointerException e) {
                     System.out.println(String.format("D%dL%d folder 'Inspection and Test Plan' found empty or not existing", drop, level));
                 }
-
                 try {
                     sourceFilePath = new File(filesPath);
-
                     listOfFiles = sourceFilePath.listFiles();
 
                     // check if contains NDI folder, if yes, extract file from it and add to list of files
@@ -252,7 +300,6 @@ public class CopyFilesRunner {
 
                         }
                     }
-
                     try {
                         Files.createDirectories(Paths.get(destinationPath));
                     } catch (IOException en) {
@@ -268,7 +315,6 @@ public class CopyFilesRunner {
                             System.out.println(e);
                         }
                     }
-
                     // cleanup the file names
                     countFilesInFolder = 1;
                     for (File file : new File(destinationPath).listFiles()) {
@@ -312,18 +358,14 @@ public class CopyFilesRunner {
     }
 
     public int copyAsBuiltReports(int filesCounter) {
-
         String filePath;
         String destinationString;
         File sourceFilePath;
-        File asBuiltReport;
+        File asBuiltReport = null;
         File[] listOfFiles;
         File[] destinationFolderContent;
-
         for (int drop = 2; drop <= 8; drop = drop + 2) {
-
             for (int level = 8; level <= 66; level++) {
-
                 if (level < 10) {
                     destinationString = String.format("T:/QUALITY/FACADE DATABASE ( FINAL )/4b Works (As-built reports)/DROP %d/D%dL0%d/ScanPrint report/", drop, drop, level);
                     filePath = String.format("T:/QUALITY/SCANPRINT REPORTS/DROP %d/D%dL0%d/As-built Report", drop, drop, level);
@@ -331,7 +373,6 @@ public class CopyFilesRunner {
                     destinationString = String.format("T:/QUALITY/FACADE DATABASE ( FINAL )/4b Works (As-built reports)/DROP %d/D%dL%d/ScanPrint report/", drop, drop, level);
                     filePath = String.format("T:/QUALITY/SCANPRINT REPORTS/DROP %d/D%dL%d/As-built Report", drop, drop, level);
                 }
-
                 destinationFolderContent = new File(destinationString).listFiles();
                 try {
                     for (File file : destinationFolderContent) {
@@ -340,34 +381,29 @@ public class CopyFilesRunner {
                 } catch (NullPointerException e) {
                     System.out.println(String.format("D%dL%d folder ScanPrint report found empty or not existing", drop, level));
                 }
-
-                //System.out.println(destinationString + "    " + filePath);
-
                 try {
                     sourceFilePath = new File(filePath);
-
                     listOfFiles = sourceFilePath.listFiles();
-
-                    //System.out.println(listOfFiles[listOfFiles.length-1].getName());
-
                     String lastFolder = listOfFiles[listOfFiles.length - 1].getName();
-
                     filePath = String.format("%s/%s", filePath, lastFolder);
-
                     sourceFilePath = new File(filePath);
-                    asBuiltReport = sourceFilePath.listFiles()[0]; // the As-built report pdf file
-
+                    for (File file : sourceFilePath.listFiles()) {
+                        if (file.getName().contains("MLC-SPR") || file.getName().endsWith(".pdf")) {
+                            asBuiltReport = file; // the As-built report pdf file
+                        } else {
+                            System.out.println(String.format("could not find D%dL%d As-built report", drop, level));
+                        }
+                    }
                     try {
                         Files.createDirectories(Paths.get(destinationString));
                     } catch (IOException en) {
-                        System.out.println(en);
+                        System.out.println(en + String.format("could not create D%dL%d as-built folder", drop, level));
                     }
-
                     try {
                         Files.copy(asBuiltReport.toPath(), new File(destinationString + asBuiltReport.getName()).toPath());
                         filesCounter++;
                     } catch (IOException e) {
-                        System.out.println(e);
+                        System.out.println(e + String.format("could not copy D%dL%d As-built report", drop, level));
                     }
                 } catch (NullPointerException e) {
                     System.out.println(filePath + " not found");
@@ -382,12 +418,14 @@ public class CopyFilesRunner {
         long startMillis = System.currentTimeMillis();
         CopyFilesRunner copyFilesRunner = new CopyFilesRunner();
         int filesCounter = 0;
-/*        System.out.println("Starting to copy As-built ScanPrint Reports...");
+        System.out.println("Starting to copy As-built ScanPrint Reports...");
         filesCounter = copyFilesRunner.copyAsBuiltReports(filesCounter);
         System.out.println("Starting to copy As-built supporting documentation...");
-        filesCounter = copyFilesRunner.copyAsBuiltSupportingDocumentation(filesCounter);*/
+        filesCounter = copyFilesRunner.copyAsBuiltSupportingDocumentation(filesCounter);
         System.out.println("Starting to copy NDI's supporting documentation...");
         filesCounter = copyFilesRunner.copyNdiSupportingDocumentation(filesCounter);
+        System.out.println("Starting to copy NDI's reports documentation...");
+        filesCounter = copyFilesRunner.copyNdiReports(filesCounter);
         long endMillis = System.currentTimeMillis();
         System.out.println(String.format("Complete, files copied: %d, elapsed time: %d s", filesCounter, (endMillis-startMillis)/1000 ));
     }
