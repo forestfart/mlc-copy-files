@@ -2,8 +2,202 @@ package au.mlc.copy.files;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CopyFilesRunner {
+
+    private int copyNdiSupportingDocumentation(int filesCounter) {
+        String filesPath, destinationPath, destinationCovermeter, destinationPotential, destionationVisual, destinationDrummy;
+        File sourceFilePath, fileITP, fileCover, fileVisual, fileDrummy = null, newFileITP, newFileDrummy, newFileVisual, newFileCover, newFilePotential, newFile;
+        File[] destinationFolderContent;
+        File[] listOfFiles;
+        List<File> filesPotential;
+
+        for (int drop = 2; drop <= 8; drop = drop + 2) {
+
+            for (int level = 8; level <= 66; level++) {
+
+                if (level < 10) {
+                    destinationPath = String.format("T:/QUALITY/FACADE DATABASE ( FINAL )/4a Schedule of all repairs (NDI reports)/DROP %d/D%dL0%d/Inspection and Test Plan/", drop, drop, level);
+                    filesPath = String.format("T:/DOCUMENTS/From 2000 to 4999 = WORKS/From 3000 to 3050 = Repair Works/3000 = ITP, Tower NDI/Results/Drop %d/D%d L%d/", drop, drop, level);
+                } else {
+                    destinationPath = String.format("T:/QUALITY/FACADE DATABASE ( FINAL )/4a Schedule of all repairs (NDI reports)/DROP %d/D%dL%d/Inspection and Test Plan/", drop, drop, level);
+                    filesPath = String.format("T:/DOCUMENTS/From 2000 to 4999 = WORKS/From 3000 to 3050 = Repair Works/3000 = ITP, Tower NDI/Results/Drop %d/D%d L%d/", drop, drop, level);
+                }
+                destinationCovermeter = destinationPath + "Q-CL-004 Base of Spandrel Covermeter Survey/";
+                destinationPotential = destinationPath + "Q-CL-009 Potential mapping results/";
+                destinationDrummy = destinationPath + "Q-REC-012 Drummy and low cover survey/";
+                destionationVisual = destinationPath + "Q-REC-012 Visual Inspection/";
+
+                destinationFolderContent = new File(destinationPath).listFiles();
+                try {
+                    for (File file : destinationFolderContent) {
+                        if (file.isDirectory()) {
+                            for (File fileInFolder : file.listFiles()) {
+                                fileInFolder.delete();
+                            }
+                        }
+                        file.delete();
+                    }
+                } catch (NullPointerException e) {
+                    System.out.println(String.format("D%dL%d folder 'Inspection and Test Plan' found empty or not existing", drop, level));
+                }
+
+                try {
+                    Files.createDirectories(Paths.get(destinationCovermeter));
+                    Files.createDirectories(Paths.get(destinationPotential));
+                    Files.createDirectories(Paths.get(destionationVisual));
+                    Files.createDirectories(Paths.get(destinationDrummy));
+                } catch (IOException en) {
+                    System.out.println(en);
+                }
+
+                sourceFilePath = new File(filesPath);
+
+                try {
+                    listOfFiles = sourceFilePath.listFiles();
+
+                    if (listOfFiles.length == 0) {
+                        System.out.println("empty source folder");
+                    }
+                    filesPotential = new ArrayList<>();
+                    fileDrummy = null;
+                    for (File file : listOfFiles) {
+
+                        if (file.getName().contains("ITP")) {
+                            fileITP = file;
+                            if (fileITP.isDirectory()) {
+                                for (File fileInFolder : fileITP.listFiles()) {
+                                    if (fileInFolder.getName().contains("NDI") && fileInFolder.getName().endsWith(".pdf")) {
+                                        fileITP = fileInFolder;
+                                    } else if (fileInFolder.getName().endsWith(".pdf")) {
+                                        fileITP = fileInFolder;
+                                    }
+                                }
+                            }
+                            try {
+                                newFileITP = new File(destinationPath + fileITP.getName());
+                                Files.copy(fileITP.toPath(), newFileITP.toPath());
+                                Files.move(newFileITP.toPath(), newFileITP.toPath().resolveSibling(String.format("D%dL%d - NDI's Inspection and Test Plan.pdf", drop, level)));
+                                filesCounter++;
+                            } catch (Exception e) {
+                                System.out.println(e + String.format("D%dL%d ITP file problem", drop, level));
+                            }
+                        }
+                        if (file.getName().contains("base")) {
+                            fileCover = file;
+                            if (fileCover.isDirectory()) {
+                                for (File fileInFolder : fileCover.listFiles()) {
+                                    if (fileInFolder.getName().contains(String.format("D%dL%d", drop, level)) && fileInFolder.getName().endsWith(".pdf")) {
+                                        fileCover = fileInFolder;
+                                    } else if (fileInFolder.getName().endsWith(".pdf")) {
+                                        fileCover = fileInFolder;
+                                    }
+                                }
+                            }
+                            try {
+                                newFileCover = new File(destinationCovermeter + fileCover.getName());
+                                Files.copy(fileCover.toPath(), newFileCover.toPath());
+                                Files.move(newFileCover.toPath(), newFileCover.toPath().resolveSibling(String.format("D%dL%d - Q-CL-004 Base of Spandrel Covermeter Survey.pdf", drop, level)));
+                                filesCounter++;
+                            } catch (Exception e) {
+                                System.out.println(e + String.format("D%dL%d CoverMeter file problem", drop, level));
+                            }
+
+                        }
+                        if (file.getName().contains("night")) {
+                            fileDrummy = file;
+                            if (fileDrummy.isDirectory()) {
+                                for (File fileInFolder : fileDrummy.listFiles()) {
+                                    if (fileInFolder.getName().endsWith(".pdf")) {
+                                        fileDrummy = fileInFolder;
+                                    }
+                                }
+                            }
+                            try {
+                                newFileDrummy = new File(destinationDrummy + fileDrummy.getName());
+                                Files.copy(fileDrummy.toPath(), newFileDrummy.toPath());
+                                Files.move(newFileDrummy.toPath(), newFileDrummy.toPath().resolveSibling(String.format("D%dL%d - Q-REC-012 Drummy and Low Cover Survey.pdf", drop, level)));
+                                filesCounter++;
+                            } catch (Exception e) {
+                                System.out.println(e + String.format("D%dL%d Drummy file problem", drop, level));
+                            }
+                        }
+                        if (file.getName().contains("visual")) {
+                            fileVisual = file;
+                            if (fileVisual.isDirectory()) {
+                                for (File fileInFolder : fileVisual.listFiles()) {
+                                    if (fileInFolder.getName().endsWith(".pdf")) {
+                                        fileVisual = fileInFolder;
+                                    }
+                                }
+                            }
+                            try {
+                                newFileVisual = new File(destionationVisual + fileVisual.getName());
+                                Files.copy(fileVisual.toPath(), newFileVisual.toPath());
+                                Files.move(newFileVisual.toPath(), newFileVisual.toPath().resolveSibling(String.format("D%dL%d - Q-REC-012 Visual Inspection.pdf", drop, level)));
+                                filesCounter++;
+                            } catch (Exception e) {
+                                System.out.println(e + String.format("D%dL%d Visual file problem", drop, level));
+                            }
+                        }
+                        if (file.getName().contains("corro") || file.getName().contains("otential")) {
+                            if (file.isDirectory()) {
+                                for (File fileInFolder : file.listFiles()) {
+                                    if (fileInFolder.getName().endsWith(".pdf")) {
+                                        filesPotential.add(fileInFolder);
+                                    }
+                                }
+                                if (filesPotential.size() == 0) {
+                                    for (File fileInFolder : file.listFiles()) {
+                                        if (fileInFolder.getName().contains("TRANS")) {
+                                            for (File fileInsideTrans : fileInFolder.listFiles()) {
+                                                if (fileInsideTrans.getName().endsWith(".pdf")) {
+                                                    filesPotential.add(fileInsideTrans);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (filesPotential.size() == 0) {
+                                    System.out.println(String.format("D%dL%d is missing potential mapping results <<<-----", drop, level));
+                                }
+                            } else {
+                                filesPotential.add(file);
+                            }
+                        }
+                    }
+                    for (File filePotential : filesPotential) {
+                        try {
+                            newFilePotential = new File(destinationPotential + filePotential.getName());
+                            Files.copy(filePotential.toPath(), newFilePotential.toPath());
+                            if (filesPotential.size() == 1) {
+                                Files.move(newFilePotential.toPath(), newFilePotential.toPath().resolveSibling(String.format("D%dL%d - Q-CL-009 Potential mapping results.pdf", drop, level)));
+                            } else {
+                                Files.move(newFilePotential.toPath(), newFilePotential.toPath().resolveSibling(String.format("D%dL%d - Q-CL-009 Potential mapping results (%s).pdf", drop, level, filePotential.getName())));
+                            }
+                            filesCounter++;
+                        } catch (Exception e) {
+                            System.out.println(e + String.format("D%dL%d Potential file problem", drop, level));
+                        }
+                    }
+                    System.out.println(fileDrummy);
+                    if (fileDrummy == null) {
+                        newFile = new File(String.format("%sPlease refer to D%dL%d Q-REC-012 Visual Inspection", destinationDrummy, drop, level));
+                        try {
+                            newFile.createNewFile();
+                        } catch (IOException e) {
+                            System.out.println(e);
+                        }
+                    }
+                } catch (NullPointerException e) {
+                    System.out.println(e);
+                }
+            }
+        }
+        return filesCounter;
+    }
 
     public int copyAsBuiltSupportingDocumentation(int filesCounter) {
 
@@ -32,7 +226,7 @@ public class CopyFilesRunner {
                         file.delete();
                     }
                 } catch (NullPointerException e) {
-                    System.out.println(String.format("D%dL%d foldr 'Inspection and Test Plan' found empty or not existing", drop, level));
+                    System.out.println(String.format("D%dL%d folder 'Inspection and Test Plan' found empty or not existing", drop, level));
                 }
 
                 try {
@@ -185,13 +379,15 @@ public class CopyFilesRunner {
 
 
     public static void main(String[] args) {
+        long startMillis = System.currentTimeMillis();
         CopyFilesRunner copyFilesRunner = new CopyFilesRunner();
         int filesCounter = 0;
-        System.out.println("Starting to copy As-built ScanPrint Reports...");
-        long startMillis = System.currentTimeMillis();
+/*        System.out.println("Starting to copy As-built ScanPrint Reports...");
         filesCounter = copyFilesRunner.copyAsBuiltReports(filesCounter);
         System.out.println("Starting to copy As-built supporting documentation...");
-        filesCounter = copyFilesRunner.copyAsBuiltSupportingDocumentation(filesCounter);
+        filesCounter = copyFilesRunner.copyAsBuiltSupportingDocumentation(filesCounter);*/
+        System.out.println("Starting to copy NDI's supporting documentation...");
+        filesCounter = copyFilesRunner.copyNdiSupportingDocumentation(filesCounter);
         long endMillis = System.currentTimeMillis();
         System.out.println(String.format("Complete, files copied: %d, elapsed time: %d s", filesCounter, (endMillis-startMillis)/1000 ));
     }
