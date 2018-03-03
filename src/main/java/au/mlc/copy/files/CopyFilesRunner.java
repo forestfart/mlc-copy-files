@@ -9,7 +9,7 @@ public class CopyFilesRunner {
     public int copyNdiReports(int filesCounter) {
         String filePath;
         String destinationString;
-        File sourceFilePath;
+        File sourceFilePath, lastDirectory = null;
         File ndiReport = null;
         File[] listOfFiles;
         File[] destinationFolderContent;
@@ -38,15 +38,26 @@ public class CopyFilesRunner {
                 try {
                     sourceFilePath = new File(filePath);
                     listOfFiles = sourceFilePath.listFiles();
-                    String lastFolder = listOfFiles[listOfFiles.length - 1].getName();
-                    filePath = String.format("%s/%s", filePath, lastFolder);
+                    for (File folder : listOfFiles) {
+                        if (folder.isDirectory() || folder.getName().contains("OFFICIAL") || folder.lastModified() > lastDirectory.lastModified()) {
+                            lastDirectory = folder;
+                        }
+                    }
+                    if (lastDirectory == null) {
+                        System.out.println(String.format("D%dL%d folder with NDI report not found", drop, level));
+                    } else {
+                        filePath = lastDirectory.getPath();
+                    }
+                    //lastFolder = listOfFiles[listOfFiles.length - 1].getName();
+                    //filePath = String.format("%s/%s", filePath, lastFolder);
                     sourceFilePath = new File(filePath);
                     for (File file : sourceFilePath.listFiles()) {
                         if (file.getName().contains("MLC-SPR") || file.getName().endsWith(".pdf")) {
                             ndiReport = file;// the NDI's report pdf file
-                        } else {
-                            System.out.println(String.format("could not find D%dL%d NDI's report", drop, level));
                         }
+                    }
+                    if (ndiReport == null) {
+                        System.out.println(String.format("could not find D%dL%d NDI's report", drop, level));
                     }
                     try {
                         Files.createDirectories(Paths.get(destinationString));
@@ -360,7 +371,7 @@ public class CopyFilesRunner {
     public int copyAsBuiltReports(int filesCounter) {
         String filePath;
         String destinationString;
-        File sourceFilePath;
+        File sourceFilePath, lastDirectory = null;
         File asBuiltReport = null;
         File[] listOfFiles;
         File[] destinationFolderContent;
@@ -384,15 +395,27 @@ public class CopyFilesRunner {
                 try {
                     sourceFilePath = new File(filePath);
                     listOfFiles = sourceFilePath.listFiles();
-                    String lastFolder = listOfFiles[listOfFiles.length - 1].getName();
-                    filePath = String.format("%s/%s", filePath, lastFolder);
+
+                    for (File folder : listOfFiles) {
+                        if (folder.isDirectory() || folder.getName().contains("FINAL") || folder.lastModified() > lastDirectory.lastModified()) {
+                            lastDirectory = folder;
+                        }
+                    }
+                    if (lastDirectory == null) {
+                        System.out.println(String.format("D%dL%d folder with As-built report not found", drop, level));
+                    } else {
+                        filePath = lastDirectory.getPath();
+                    }
+                    //String lastFolder = listOfFiles[listOfFiles.length - 1].getName();
+                    //filePath = String.format("%s/%s", filePath, lastFolder);
                     sourceFilePath = new File(filePath);
                     for (File file : sourceFilePath.listFiles()) {
                         if (file.getName().contains("MLC-SPR") || file.getName().endsWith(".pdf")) {
                             asBuiltReport = file; // the As-built report pdf file
-                        } else {
-                            System.out.println(String.format("could not find D%dL%d As-built report", drop, level));
                         }
+                    }
+                    if (asBuiltReport == null) {
+                        System.out.println(String.format("could not find D%dL%d As-built report", drop, level));
                     }
                     try {
                         Files.createDirectories(Paths.get(destinationString));
@@ -416,6 +439,7 @@ public class CopyFilesRunner {
 
     public static void main(String[] args) {
         long startMillis = System.currentTimeMillis();
+        long minutes, seconds, milliseconds;
         CopyFilesRunner copyFilesRunner = new CopyFilesRunner();
         int filesCounter = 0;
         System.out.println("Starting to copy As-built ScanPrint Reports...");
@@ -427,6 +451,10 @@ public class CopyFilesRunner {
         System.out.println("Starting to copy NDI's reports documentation...");
         filesCounter = copyFilesRunner.copyNdiReports(filesCounter);
         long endMillis = System.currentTimeMillis();
-        System.out.println(String.format("Complete, files copied: %d, elapsed time: %d s", filesCounter, (endMillis-startMillis)/1000 ));
+        milliseconds = (endMillis-startMillis);
+        minutes = milliseconds / 60000;
+        seconds = milliseconds / 1000;
+        milliseconds =  milliseconds % 1000;
+        System.out.println(String.format("Complete, files copied: %d, elapsed time: %d min %d sec %d ms", filesCounter, minutes, seconds, milliseconds));
     }
 }
