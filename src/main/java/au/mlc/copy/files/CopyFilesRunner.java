@@ -168,11 +168,13 @@ public class CopyFilesRunner {
                             }
 
                         }
-                        if (file.getName().contains("night")) {
+                        if (file.getName().toLowerCase().contains("night")) {
                             fileDrummy = file;
                             if (fileDrummy.isDirectory()) {
                                 for (File fileInFolder : fileDrummy.listFiles()) {
-                                    if (fileInFolder.getName().endsWith(".pdf") && !(fileInFolder.getName().contains(String.format("D%d L%d", drop, level)))) {
+                                    if (fileInFolder.getName().endsWith(".pdf") && (fileDrummy.isDirectory())) {
+                                        fileDrummy = fileInFolder;
+                                    } else if (fileInFolder.lastModified() > fileDrummy.lastModified() && (fileInFolder.getName().endsWith(".pdf"))) {
                                         fileDrummy = fileInFolder;
                                     }
                                 }

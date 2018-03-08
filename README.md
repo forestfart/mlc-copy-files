@@ -1,1 +1,4 @@
-"# mlc-copy-files - Simple script to automate copying files between certain directories" 
+Automated files dump into database
+
+![Screenshot](https://scr.hu/RdZ0Ne)
+
