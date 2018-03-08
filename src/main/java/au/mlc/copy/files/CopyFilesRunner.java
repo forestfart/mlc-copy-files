@@ -455,7 +455,7 @@ public class CopyFilesRunner {
         long endMillis = System.currentTimeMillis();
         milliseconds = (endMillis-startMillis);
         minutes = milliseconds / 60000;
-        seconds = milliseconds / 1000;
+        seconds = milliseconds / 1000 - (minutes * 60);
         milliseconds =  milliseconds % 1000;
         System.out.println(String.format("Complete, files copied: %d, elapsed time: %d min %d sec %d ms", filesCounter, minutes, seconds, milliseconds));
     }
